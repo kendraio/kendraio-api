@@ -3,9 +3,13 @@ import BaseHTTPServer, json
 # TO DO: the handlers table is currently a global object: should make this
 #        per-instance for each server object
 
+def do_CORS(s):
+    s.send_header("Access-Control-Allow-Origin", "*")
+    s.send_header("Access-Control-Allow-Header", "*")
+
 def send_error(s, err_code, err_message):
     s.send_response(err_code)
-    s.send_header("Access-Control-Allow-Origin", "*")
+    do_CORS(s)
     s.send_header("Content-type", "application/json")
     s.end_headers()
     s.wfile.write(json.dumps({"error": err_code, "details": err_message}))
@@ -19,7 +23,7 @@ def handle_POST(s):
         return send_error(s, 500, "can't parse request body")
     
     if s.path not in handlers:
-        return send_error(s, 500, "no handler for request path")        
+        return send_error(s, 404, "no handler for request path")        
 
     try:
         response = handlers[s.path](request)
@@ -33,6 +37,7 @@ def handle_POST(s):
         
     s.send_response(200)
     s.send_header("Access-Control-Allow-Origin", "*")
+    do_CORS(s)
     s.send_header("Content-type", "application/json")
     s.end_headers()
     s.wfile.write(response_data)
@@ -51,9 +56,9 @@ class request_handler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_DELETE(s):
         send_error(s, 404, "can't handle DELETE requests")
 
-    def do_ORIGIN(s):
+    def do_OPTIONS(s):
         s.send_response(200)
-        s.send_header("Access-Control-Allow-Origin", "*")
+        do_CORS(s)
         s.send_header("Content-type", "application/json")
 
     def do_POST(s):
