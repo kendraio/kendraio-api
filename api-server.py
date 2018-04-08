@@ -3,6 +3,10 @@ import BaseHTTPServer, json, os, jwt
 # TO DO: the handlers table is currently a global object: should make this
 #        per-instance for each server object
 
+# Note:  the JWT public key needs to be put in an environment variable called JWT_PUBLIC_KEY
+#        this is the string value extracted from a JWKS, for example one found from auth0
+#        see https://auth0.com/docs/api-auth/tutorials/verify-access-token#how-can-i-verify-the-signature-
+
 def do_CORS(s):
     s.send_header("Access-Control-Allow-Origin", "*")
     s.send_header("Access-Control-Allow-Headers", "*")
@@ -19,10 +23,13 @@ def handle_POST(s):
     try:
         authtoken = s.headers['Authorization']
     except:
-        return send_error(s, 500, "can't see authorization token")
+        return send_error(s, 500, "can't see an authorization token")
 
-    public_key = os.environ["JWT_PUBLIC_KEY"]
-    jwt.decode(authtoken, public_key, algorithms=['RS256'])
+    try:
+        public_key = os.environ["JWT_PUBLIC_KEY"]
+        jwt.decode(authtoken, public_key, algorithms=['RS256'])
+    except:
+        return send_error(s, 500, "can't validate authorization token")
     
     try:
         content_length = int(s.headers['Content-Length'])
