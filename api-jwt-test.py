@@ -4,13 +4,15 @@ import os, jwt, sys, base64
 #        the contents of this will be a PEM formatted file containing only the public key
 #        you can recognise these because they start with a line saying "-----BEGIN PUBLIC KEY----"
 #
-#        command to extract from a PEM-formatted certificate:
+#        to get a PEM-formatted certificate file from Auth0, fetch
 #
-#            openssl x509 -pubkey -noout -in cert.pem
+#            https://[yourdomain].eu.auth0.com/.well-known/pem
 #
-#        to get a PEM-formatted certificate file from Auth0
+#        command to extract PEM-formatted public key from that PEM-formatted certificate and put it
+#        into an environment variable:
 #
-#            https://[yourdomain].eu.auth0.com/.well-known/jwks.json
+#            export JWT_PUBLIC_KEY=`openssl x509 -pubkey -noout -in cert.pem`
+#
 
 public_key = os.environ["JWT_PUBLIC_KEY"]
 jwt.decode(sys.argv[1], public_key, algorithms=['RS256'])
