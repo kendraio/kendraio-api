@@ -5,6 +5,7 @@ import BaseHTTPServer, json
 
 def send_error(s, err_code, err_message):
     s.send_response(err_code)
+    s.send_header("Access-Control-Allow-Origin", "*")
     s.send_header("Content-type", "application/json")
     s.end_headers()
     s.wfile.write(json.dumps({"error": err_code, "details": err_message}))
@@ -31,6 +32,7 @@ def handle_POST(s):
         return send_error(s, 500, "can't format response as JSON")
         
     s.send_response(200)
+    s.send_header("Access-Control-Allow-Origin", "*")
     s.send_header("Content-type", "application/json")
     s.end_headers()
     s.wfile.write(response_data)
@@ -42,6 +44,17 @@ class request_handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(s):
         send_error(s, 404, "can't handle GET requests")
+
+    def do_UPDATE(s):
+        send_error(s, 404, "can't handle UPDATE requests")
+
+    def do_DELETE(s):
+        send_error(s, 404, "can't handle DELETE requests")
+
+    def do_ORIGIN(s):
+        s.send_response(200)
+        s.send_header("Access-Control-Allow-Origin", "*")
+        s.send_header("Content-type", "application/json")
 
     def do_POST(s):
         handle_POST(s)
