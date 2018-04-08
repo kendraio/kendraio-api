@@ -17,6 +17,11 @@ def send_error(s, err_code, err_message):
 def handle_POST(s):
     global handlers
     try:
+        authtoken = s.headers['Authorization']
+    except:
+        return send_error(s, 500, "can't see authorization token")
+        
+    try:
         content_length = int(s.headers['Content-Length'])
         request = json.loads(s.rfile.read(content_length))
     except:
