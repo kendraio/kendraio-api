@@ -1,8 +1,5 @@
 import BaseHTTPServer, json, os, jwt
 
-# TO DO: the handlers table is currently a global object: should make this
-#        per-instance for each server object
-
 # Note:  the JWT public key needs to be put in an environment variable called JWT_PUBLIC_KEY
 #        this is the string value extracted from a JWKS, for example one found from auth0
 #        see https://auth0.com/docs/api-auth/tutorials/verify-access-token#how-can-i-verify-the-signature-
