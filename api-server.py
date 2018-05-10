@@ -24,7 +24,8 @@ def handle_POST(s):
 
         try:
             public_key = os.environ["JWT_PUBLIC_KEY"]
-            jwt.decode(authtoken, public_key, algorithms=['RS256'])
+            audience = os.environ["JWT_AUDIENCE"]
+            jwt.decode(authtoken, public_key, algorithms=['RS256'], audience=audience)
         except:
             return send_error(s, 500, "can't validate authorization token")
     
