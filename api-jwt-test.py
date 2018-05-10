@@ -15,4 +15,4 @@ import os, jwt, sys, base64
 #
 
 public_key = os.environ["JWT_PUBLIC_KEY"]
-jwt.decode(sys.argv[1], public_key, algorithms=['RS256'])
+jwt.decode(sys.argv[1], public_key, algorithms=['RS256'], audience=sys.argv[2])
