@@ -36,7 +36,6 @@ def handle_POST(s):
         return send_error(s, 500, "can't format response as JSON")
         
     s.send_response(200)
-    s.send_header("Access-Control-Allow-Origin", "*")
     do_CORS(s)
     s.send_header("Content-type", "application/json")
     s.end_headers()
