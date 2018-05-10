@@ -18,9 +18,11 @@ def send_error(s, err_code, err_message):
 def handle_POST(s):
     if s.server.require_authorization:
         try:
-            authtoken = s.headers['Authorization']
+            # the JWT may be preceded by some other token like 'Bearer' or 'JWT':
+            # ignore this, and just take the last token on the line 
+            authtoken = string.split(s.headers['Authorization'])[-1]
         except:
-            return send_error(s, 500, "can't see an authorization token")
+            return send_error(s, 500, "missing or malformed authorization token")
 
         try:
             public_key = os.environ["JWT_PUBLIC_KEY"]
