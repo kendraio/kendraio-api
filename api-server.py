@@ -5,7 +5,7 @@ import BaseHTTPServer, json
 
 def do_CORS(s):
     s.send_header("Access-Control-Allow-Origin", "*")
-    s.send_header("Access-Control-Allow-Header", "*")
+    s.send_header("Access-Control-Allow-Headers", "*")
 
 def send_error(s, err_code, err_message):
     s.send_response(err_code)
