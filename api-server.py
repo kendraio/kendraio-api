@@ -19,17 +19,17 @@ def send_error(s, err_code, err_message):
     s.wfile.write(json.dumps({"error": err_code, "details": err_message}))
 
 def handle_POST(s):
-    global handlers
-    try:
-        authtoken = s.headers['Authorization']
-    except:
-        return send_error(s, 500, "can't see an authorization token")
+    if s.server.require_authorization:
+        try:
+            authtoken = s.headers['Authorization']
+        except:
+            return send_error(s, 500, "can't see an authorization token")
 
-    try:
-        public_key = os.environ["JWT_PUBLIC_KEY"]
-        jwt.decode(authtoken, public_key, algorithms=['RS256'])
-    except:
-        return send_error(s, 500, "can't validate authorization token")
+        try:
+            public_key = os.environ["JWT_PUBLIC_KEY"]
+            jwt.decode(authtoken, public_key, algorithms=['RS256'])
+        except:
+            return send_error(s, 500, "can't validate authorization token")
     
     try:
         content_length = int(s.headers['Content-Length'])
@@ -37,11 +37,11 @@ def handle_POST(s):
     except:
         return send_error(s, 500, "can't parse request body")
     
-    if s.path not in handlers:
+    if s.path not in s.server.handlers:
         return send_error(s, 404, "no handler for request path")        
 
     try:
-        response = handlers[s.path](request)
+        response = s.server.handlers[s.path](request)
     except:
         return send_error(s, 500, "request handler threw exception")
 
@@ -80,18 +80,16 @@ class request_handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 class api_server():
     def __init__(self, hostname, port):
-        global handlers
         self.httpd = BaseHTTPServer.HTTPServer((hostname, port), request_handler)
-        handlers = {}
+        self.httpd.handlers = {}
+        self.httpd.require_authorization = True
         
     def add_handler(self, path, handler):
-        global handlers
-        handlers[path] = handler
+        self.httpd.handlers[path] = handler
 
     def remove_handler(self, path):
-        global handlers
-        if path in handlers:
-            del handlers[path]
+        if path in self.httpd.handlers:
+            del self.httpd.handlers[path]
         
     def run(self):
         self.httpd.serve_forever()
