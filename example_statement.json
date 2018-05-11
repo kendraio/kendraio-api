@@ -28,6 +28,6 @@
         "@type": "inclusion-relationship",
         "frame": { "@id": "id000001" },
         "content": { "@id": "id000002" },
-	"bounding-box": [10, 130, 140, 200],
+	"bounding-box": [10, 130, 140, 200]
     }
 ]
