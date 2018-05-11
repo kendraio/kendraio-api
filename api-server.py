@@ -32,8 +32,8 @@ def handle_POST(s):
 
         try:
             jwt.decode(authtoken, public_key, algorithms=['RS256'], audience=audience)
-        except:
-            return send_error(s, 500, "can't validate authorization token")
+        except Exception as e:
+            return send_error(s, 500, "can't validate authorization token: %s" % str(e))
     
     try:
         content_length = int(s.headers['Content-Length'])
