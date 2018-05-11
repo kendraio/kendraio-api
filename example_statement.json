@@ -1,0 +1,33 @@
+[
+    {
+	"@context": "http://kendraio.org/schema-v1",
+	"@id": "id000001",
+	"@type": "image",
+	"url": "https://example.com/images/2345.jpg",
+	"hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+	"thumbnail": "data:image/jpeg;dGhpcyBpcyBub3QgYW4gaW1hZ2UsIGJ1dCBpZiBpdCB3YXMsIGl0IHdvdWxkIGJlIGpwZWctZW5jb2RlZAo=",
+	"width": 1024,
+	"height": 720
+    },
+    {
+	"@context": "http://schema.org",
+	"@id": "id000002",
+	"@type": "Person",
+	"name": "John Smith",
+	"address": {
+	    "@type": "PostalAddress",
+	    "addressLocality": "London",
+	    "addressRegion": "GB",
+	    "postalCode": "N22",
+	    "streetAddress": "1 High Street"
+	}
+    },
+    {
+	"@context": "http://kendraio.org/schema-v1",
+        "@id": "id000003",
+        "@type": "inclusion-relationship",
+        "frame": { "@id": "id000001" },
+        "content": { "@id": "id000002" },
+	"bounding-box": [10, 130, 140, 200],
+    }
+]
