@@ -1,3 +1,9 @@
-import requests
+import requests, sys
 
-print requests.post("http://localhost:8080/hello", headers={'authorization': 'dummy-auth-token'}, json={'input': 'data'}).json()
+try:
+    authtoken = sys.argv[1]
+except:
+    print >> sys.stderr, "Usage: python api-client.py [JWT token]"
+    exit(1)
+
+print requests.post("http://localhost:8080/hello", headers={'authorization': 'Bearer %s' % authtoken}, json={'input': 'data'}).json()

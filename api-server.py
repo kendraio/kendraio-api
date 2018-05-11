@@ -1,4 +1,4 @@
-import BaseHTTPServer, json, os, jwt
+import BaseHTTPServer, json, os, jwt, string
 
 # Note:  the JWT public key needs to be put in an environment variable called JWT_PUBLIC_KEY
 #        this is the string value extracted from a JWKS, for example one found from auth0
@@ -18,7 +18,7 @@ def send_error(s, err_code, err_message):
 def handle_POST(s):
     if s.server.require_authorization:
         try:
-            # the JWT may be preceded by some other token like 'Bearer' or 'JWT':
+            # the JWT will typically be preceded by some other token like 'Bearer' or 'JWT':
             # ignore this, and just take the last token on the line 
             authtoken = string.split(s.headers['Authorization'])[-1]
         except:
@@ -27,6 +27,10 @@ def handle_POST(s):
         try:
             public_key = os.environ["JWT_PUBLIC_KEY"]
             audience = os.environ["JWT_AUDIENCE"]
+        except:
+            return send_error(s, 500, "validation parameters not installed on server")
+
+        try:
             jwt.decode(authtoken, public_key, algorithms=['RS256'], audience=audience)
         except:
             return send_error(s, 500, "can't validate authorization token")
