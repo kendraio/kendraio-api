@@ -1,8 +1,22 @@
 import BaseHTTPServer, json, os, jwt, string
 
-# Note:  the JWT public key needs to be put in an environment variable called JWT_PUBLIC_KEY
-#        this is the string value extracted from a JWKS, for example one found from auth0
-#        see https://auth0.com/docs/api-auth/tutorials/verify-access-token#how-can-i-verify-the-signature-
+# Note: the JWT public key needs to be put in an environment variable
+# called JWT_PUBLIC_KEY
+
+# If you are using Auth0 as identity provider, you can get this from
+# the PEM formatted public key _certificate_ at
+#
+#  https://YOUR_AUTH0_DOMAIN/.well-known/pem
+#
+# Then extract the public key and load it into the environment like this:
+#
+#  export JWT_PUBLIC_KEY=`openssl x509 -pubkey -noout -in your_certificate.pem`
+#
+# The JWT_AUDIENCE enviroment variable will also need to be set to your
+# predefined value.
+
+# A note about Python crypto libraries: "pycrypto" doesn't do enough:
+# try installing the "cryptography" library
 
 def do_CORS(s):
     s.send_header("Access-Control-Allow-Origin", "*")
