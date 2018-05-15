@@ -42,7 +42,7 @@ def handle_POST(s):
             public_key = os.environ["JWT_PUBLIC_KEY"]
             audience = os.environ["JWT_AUDIENCE"]
         except:
-            return send_error(s, 500, "validation parameters not installed on server")
+            return send_error(s, 500, "can't fetch validation parameters")
 
         try:
             jwt.decode(authtoken, public_key, algorithms=['RS256'], audience=audience)
@@ -71,6 +71,7 @@ def handle_POST(s):
     s.send_response(200)
     do_CORS(s)
     s.send_header("Content-type", "application/json")
+    s.send_header("Cache-control", "max-age=0")
     s.end_headers()
     s.wfile.write(response_data)
 
