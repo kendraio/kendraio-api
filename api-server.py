@@ -1,19 +1,19 @@
-import BaseHTTPServer, json, os, jwt, string
+import BaseHTTPServer, json, jwt, string, sys
 
-# Note: the JWT public key needs to be put in an environment variable
-# called JWT_PUBLIC_KEY
+# Both the JWT_PUBLIC_KEY and JWT_AUDIENCE variables are got from
+# credentials loaded into the server object
 
-# If you are using Auth0 as identity provider, you can get this from
+# The JWT library needs the public key to be supplied to it in X.509 format
+#
+# If you are using Auth0 as identity provider, you can get the public key from
 # the PEM formatted public key _certificate_ at
 #
 #  https://YOUR_AUTH0_DOMAIN/.well-known/pem
 #
-# Then extract the public key and load it into the environment like this:
+# Then extract the public key  like this:
 #
-#  export JWT_PUBLIC_KEY=`openssl x509 -pubkey -noout -in your_certificate.pem`
+#  openssl x509 -pubkey -noout -in your_certificate.pem
 #
-# The JWT_AUDIENCE enviroment variable will also need to be set to your
-# predefined value.
 
 # A note about Python crypto libraries: "pycrypto" doesn't do enough:
 # try installing the "cryptography" library
@@ -39,13 +39,16 @@ def handle_POST(s):
             return send_error(s, 500, "missing or malformed authorization token")
 
         try:
-            public_key = os.environ["JWT_PUBLIC_KEY"]
-            audience = os.environ["JWT_AUDIENCE"]
+            public_key = s.server.credentials["JWT_PUBLIC_KEY"]
+            audience = s.server.credentials["JWT_AUDIENCE"]
         except:
             return send_error(s, 500, "can't fetch validation parameters")
 
         try:
-            jwt.decode(authtoken, public_key, algorithms=['RS256'], audience=audience)
+            token = jwt.decode(authtoken, public_key,
+                               algorithms=['RS256'],
+                               audience=audience)
+            subject = token["sub"]
         except Exception as e:
             return send_error(s, 500, "can't validate authorization token: %s" % str(e))
     
@@ -59,7 +62,7 @@ def handle_POST(s):
         return send_error(s, 404, "no handler for request path")        
 
     try:
-        response = s.server.handlers[s.path](request)
+        response = s.server.handlers[s.path](subject, request)
     except:
         return send_error(s, 500, "request handler threw exception")
 
@@ -75,7 +78,6 @@ def handle_POST(s):
     s.end_headers()
     s.wfile.write(response_data)
 
-        
 class request_handler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_HEAD(s):
         send_error(s, 404, "can't handle HEAD requests")
@@ -103,6 +105,9 @@ class api_server():
         self.httpd.handlers = {}
         self.httpd.require_authorization = True
         
+    def add_credentials(self, credentials):
+        self.httpd.credentials = credentials
+
     def add_handler(self, path, handler):
         self.httpd.handlers[path] = handler
 
@@ -114,10 +119,13 @@ class api_server():
         self.httpd.serve_forever()
 
 if __name__ == '__main__':
-    def hello_handler(x):
-        return ("Hello! You sent me this:", x)
+    def hello_handler(subject, x):
+        return ("Hello %s! You sent me this:" % subject, x)
     
     server = api_server("localhost", 8080)
+
+    # load credentials from stdin
+    server.add_credentials(json.loads(sys.stdin.read()))
     server.add_handler('/hello', hello_handler)
     server.run()
 
