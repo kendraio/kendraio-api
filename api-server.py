@@ -1,4 +1,4 @@
-import BaseHTTPServer, json, jwt, string, sys
+import BaseHTTPServer, json, jwt, string, sys, time, hashlib
 
 # Both the JWT_PUBLIC_KEY and JWT_AUDIENCE variables are got from
 # credentials loaded into the server object
@@ -28,7 +28,7 @@ def send_error(s, err_code, err_message):
     s.send_header("Content-type", "application/json")
     s.end_headers()
     s.wfile.write(json.dumps({"error": err_code, "details": err_message}))
-
+    
 def handle_POST(s):
     if s.server.require_authorization:
         try:
@@ -67,7 +67,7 @@ def handle_POST(s):
         return send_error(s, 500, "request handler threw exception")
 
     try:
-        response_data = json.dumps(response)
+        response_data = json.dumps(response, sort_keys=True)
     except:
         return send_error(s, 500, "can't format response as JSON")
         
@@ -95,6 +95,8 @@ class request_handler(BaseHTTPServer.BaseHTTPRequestHandler):
         s.send_response(200)
         do_CORS(s)
         s.send_header("Content-type", "application/json")
+        s.end_headers()
+        s.wfile.write(json.dumps(None, sort_keys=True))
 
     def do_POST(s):
         handle_POST(s)
@@ -121,11 +123,23 @@ class api_server():
 if __name__ == '__main__':
     def hello_handler(subject, x):
         return ("Hello %s! You sent me this:" % subject, x)
+
+    def assert_handler(source_id, statement):
+        # Hash a canonical representation of the JSON object
+        hash = hashlib.sha256(json.dumps(statement, sort_keys=True)).hexdigest()
+        assertion = { 
+            "source_id": source_id,
+            "timestamp_received": time.time(),
+            "statement": statement,
+            "statement-hash": hash
+        }
+        return {"received": assertion}
     
     server = api_server("localhost", 8080)
 
     # load credentials from stdin
     server.add_credentials(json.loads(sys.stdin.read()))
     server.add_handler('/hello', hello_handler)
+    server.add_handler('/assert', assert_handler)
     server.run()
 
