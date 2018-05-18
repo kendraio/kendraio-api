@@ -4,17 +4,6 @@ if __name__ == '__main__':
     def hello_handler(subject, x):
         return ("Hello %s! You sent me this:" % subject, x)
 
-    def assert_handler(source_id, statement):
-        # Hash a canonical representation of the JSON object
-        hash = hashlib.sha256(json.dumps(statement, sort_keys=True)).hexdigest()
-        assertion = { 
-            "source_id": source_id,
-            "timestamp_received": time.time(),
-            "statement": statement,
-            "statement-hash": hash
-        }
-        return {"received": assertion}
-    
     server = kendraio_api_server.api_server("localhost", 8080)
 
     # load credentials from stdin

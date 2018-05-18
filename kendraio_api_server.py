@@ -53,7 +53,8 @@ def handle_POST(s):
                                audience=audience)
             subject = token["sub"]
         except Exception as e:
-            return send_error(s, 401, "NOT_AUTHORIZED", "can't validate authorization token", debugging_info=str(e))
+            return send_error(s, 401, "NOT_AUTHORIZED", "can't validate authorization token",
+                              debugging_info=str(e))
     
     try:
         content_length = int(s.headers['Content-Length'])
@@ -67,7 +68,8 @@ def handle_POST(s):
     try:
         response = s.server.handlers[s.path](subject, request)
     except:
-        return send_error(s, 500, "REQUEST_HANDLER_EXCEPTION", "request handler threw exception")
+        return send_error(s, 500, "REQUEST_HANDLER_EXCEPTION", "request handler threw exception",
+                          debugging_info=str(e))
 
     try:
         response_data = json.dumps(response, sort_keys=True)
