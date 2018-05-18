@@ -67,7 +67,7 @@ def handle_POST(s):
 
     try:
         response = s.server.handlers[s.path](subject, request)
-    except:
+    except Exception as e:
         return send_error(s, 500, "REQUEST_HANDLER_EXCEPTION", "request handler threw exception",
                           debugging_info=str(e))
 
@@ -114,7 +114,7 @@ class api_server():
         
     def add_credentials(self, credentials):
         self.httpd.credentials = credentials
-        self.httpd.display_debugging_info = credentials.get("DISPLAY_DEBUGGING_INFO", False)
+        self.httpd.display_debugging_info = credentials.get("KENDRAIO_API_REVEAL_DEBUGGING_INFO", False)
 
     def add_handler(self, path, handler):
         self.httpd.handlers[path] = handler
