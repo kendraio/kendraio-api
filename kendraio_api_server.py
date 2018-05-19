@@ -28,24 +28,29 @@ def send_error(s, status, error_code, details, debugging_info=None):
     s.send_header("Content-type", "application/json")
     s.end_headers()
     message = {"status": status, "error_code": error_code, "details": details}
-    if s.server.display_debugging_info and debugging_info:
+    if debugging_info and s.server.reveal_debugging_info:
         message["debugging_info"] = debugging_info
     s.wfile.write(json.dumps(message))
     
 def handle_POST(s):
-    if s.server.require_authorization:
+    try:
+        # the JWT will typically be preceded by some other token like 'Bearer' or 'JWT':
+        # ignore this, and just take the last token on the line 
+        authtoken = string.split(s.headers['Authorization'])[-1]
+    except:
+        return send_error(s, 401, "NOT_AUTHORIZED", "missing or malformed authorization token")
+
+    subject = None
+    if type(s.server.allowed_static_tokens) == list:
+        if authtoken in s.server.allowed_static_tokens:
+            subject = "static_auth"
+            
+    if not subject:
         try:
             public_key = s.server.credentials["JWT_PUBLIC_KEY"]
             audience = s.server.credentials["JWT_AUDIENCE"]
         except:
             return send_error(s, 500, "MISSING_JWT_CREDENTIALS", "can't fetch validation parameters")
-
-        try:
-            # the JWT will typically be preceded by some other token like 'Bearer' or 'JWT':
-            # ignore this, and just take the last token on the line 
-            authtoken = string.split(s.headers['Authorization'])[-1]
-        except:
-            return send_error(s, 401, "NOT_AUTHORIZED", "missing or malformed authorization token")
 
         try:
             token = jwt.decode(authtoken, public_key,
@@ -66,7 +71,8 @@ def handle_POST(s):
         return send_error(s, 404, "NO_REQUEST_HANDLER", "no handler for request path")        
 
     try:
-        response = s.server.handlers[s.path](subject, request)
+        handler, context = s.server.handlers[s.path]
+        response = handler(subject, request, context)
     except Exception as e:
         return send_error(s, 500, "REQUEST_HANDLER_EXCEPTION", "request handler threw exception",
                           debugging_info=str(e))
@@ -110,14 +116,15 @@ class api_server():
     def __init__(self, hostname, port):
         self.httpd = BaseHTTPServer.HTTPServer((hostname, port), request_handler)
         self.httpd.handlers = {}
-        self.httpd.require_authorization = True
+        self.httpd.reveal_debugging_info = False
+        self.httpd.allowed_static_tokens = []
         
     def add_credentials(self, credentials):
         self.httpd.credentials = credentials
-        self.httpd.display_debugging_info = credentials.get("KENDRAIO_API_REVEAL_DEBUGGING_INFO", False)
-
-    def add_handler(self, path, handler):
-        self.httpd.handlers[path] = handler
+        self.httpd.reveal_debugging_info = credentials.get("KENDRAIO_API_REVEAL_DEBUGGING_INFO", False)
+        self.httpd.allowed_static_tokens = credentials.get("KENDRAIO_API_ALLOWED_STATIC_TOKENS", [])
+    def add_handler(self, path, handler, context=None):
+        self.httpd.handlers[path] = (handler, context)
 
     def remove_handler(self, path):
         if path in self.httpd.handlers:
