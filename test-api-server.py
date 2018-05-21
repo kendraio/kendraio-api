@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import kendraio_api_server, json, hashlib, sys, time
 
 if __name__ == '__main__':
